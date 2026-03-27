@@ -234,6 +234,14 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .toast.e{border-color:var(--rbdr);}
 .toast.w{border-color:rgba(245,158,11,.35);}
 
+/* STATUT */
+.s-scelle{background:rgba(34,197,94,0.12);color:#4ade80;border:1px solid rgba(34,197,94,0.25);}
+.s-ouvert{background:rgba(255,107,53,0.12);color:#ff8c5a;border:1px solid rgba(255,107,53,0.25);}
+.tr.is-ouvert{opacity:0.55;}
+.tr.is-ouvert .item-name{text-decoration:line-through;text-decoration-color:rgba(255,255,255,0.3);}
+.statut-btn{font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;text-transform:uppercase;letter-spacing:.04em;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;}
+.statut-btn:hover{filter:brightness(1.2);}
+
 /* SCROLLBAR */
 ::-webkit-scrollbar{width:4px;}
 ::-webkit-scrollbar-track{background:transparent;}
@@ -321,6 +329,8 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
         <button class="pill" onclick="setFilter('ETB / Coffret',this)">ETB</button>
         <button class="pill" onclick="setFilter('Booster',this)">Boosters</button>
         <button class="pill" onclick="setFilter('Carte single',this)">Singles</button>
+        <button class="pill" onclick="setFilter('scelle',this)">📦 Scellés</button>
+        <button class="pill" onclick="setFilter('ouvert',this)">🔓 Ouverts</button>
       </div>
     </div>
 
@@ -412,8 +422,12 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
         <input class="fi" id="m-serie" type="text" placeholder="ex: Équilibre Parfait"/>
       </div>
       <div class="fg">
-        <label class="fl">Prix d'achat € *</label>
-        <input class="fi" id="m-achat" type="number" step="0.01" min="0" placeholder="0.00"/>
+        <label class="fl">Prix d'achat €</label>
+        <input class="fi" id="m-achat" type="number" step="0.01" min="0" placeholder="0.00 (laisser vide si carte hittée)"/>
+        <div style="margin-top:5px;display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="m-hit" onchange="toggleHit()" style="width:16px;height:16px;accent-color:var(--yellow);cursor:pointer;">
+          <label for="m-hit" style="font-size:12px;color:var(--m1);cursor:pointer;">Carte obtenue en ouvrant un produit (prix d'achat = 0€)</label>
+        </div>
       </div>
     </div>
     <div class="fr">
@@ -430,12 +444,21 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
       <label class="fl">Image URL (auto si carte trouvée)</label>
       <input class="fi" id="m-img" type="text" placeholder="https://..."/>
     </div>
-    <div class="fg" id="m-watch-row">
-      <label class="fl">Ajouter aussi à la Watchlist ?</label>
-      <select class="fs" id="m-watch">
-        <option value="0">Non — juste au portfolio</option>
-        <option value="1">Oui — surveiller les prix</option>
-      </select>
+    <div class="fr">
+      <div class="fg">
+        <label class="fl">Statut</label>
+        <select class="fs" id="m-statut">
+          <option value="scelle">📦 Scellé — je l'ai encore</option>
+          <option value="ouvert">🔓 Ouvert — déjà ouvert</option>
+        </select>
+      </div>
+      <div class="fg" id="m-watch-row">
+        <label class="fl">Watchlist ?</label>
+        <select class="fs" id="m-watch">
+          <option value="0">Non</option>
+          <option value="1">Oui</option>
+        </select>
+      </div>
     </div>
 
     <div class="modal-foot">
@@ -459,15 +482,15 @@ function ls(k,d){try{const r=localStorage.getItem(k);return r?JSON.parse(r):d;}c
 function ss(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 
 let items = ls(SK, [
-  {id:1,name:"ETB Méga Évolution – Équilibre Parfait",type:"ETB / Coffret",serie:"Équilibre Parfait",achat:59.99,qty:2,marche:null,img:"https://chocobonplan.com/wp-content/uploads/2026/02/etb-pokemon-me03-equilibre-parfait-visuel-produit-300x300.png",watched:true,log:[],alerts:{seuil:5,target:null,on:true}},
-  {id:2,name:"Booster Faille Paradoxe",type:"Booster",serie:"Faille Paradoxe",achat:5.99,qty:2,marche:null,img:"https://www.relictcg.com/cdn/shop/files/2.jpg?v=1697635701",watched:false,log:[],alerts:{seuil:10,target:null,on:false}},
-  {id:3,name:"Booster Épée et Bouclier",type:"Booster",serie:"Épée et Bouclier",achat:5.99,qty:2,marche:null,img:"https://static.pkmcards.fr/products/fr/boosters/image-cartes-a-collectionner-pokemon-card-game-tcg-pkmcards-booster-epee-et-bouclier-stars-etincelantes-dracaufeu.webp",watched:false,log:[],alerts:{seuil:10,target:null,on:false}},
-  {id:4,name:"Bundle Équilibre Parfait",type:"ETB / Coffret",serie:"Équilibre Parfait",achat:38.99,qty:1,marche:null,img:"https://www.pokezenith.com/1226-home_default/pokemon-bundle-de-6-boosters-me03-equilibre-parfait.jpg",watched:false,log:[],alerts:{seuil:5,target:null,on:false}},
-  {id:5,name:"Tripack Équilibre Parfait",type:"ETB / Coffret",serie:"Équilibre Parfait",achat:17.99,qty:1,marche:null,img:"https://www.hobby-max.fr/91160-large_default/equilibre-parfait-tripack-pokemon.jpg",watched:false,log:[],alerts:{seuil:8,target:null,on:false}},
-  {id:6,name:"Coffret Pins Héros Transcendants",type:"ETB / Coffret",serie:"Héros Transcendants",achat:40.80,qty:1,marche:null,img:"https://www.ludifolie.com/64326-thickbox_default/pokemon-coffret-collection-pin-s-heros-transcendants.jpg",watched:true,log:[],alerts:{seuil:5,target:38,on:true}},
-  {id:7,name:"Booster ME03 Équilibre Parfait",type:"Booster",serie:"Équilibre Parfait",achat:6.99,qty:2,marche:null,img:"https://www.ludifolie.com/64520-thickbox_default/pokemon-me03-equilibre-parfait-booster.jpg",watched:false,log:[],alerts:{seuil:10,target:null,on:false}},
+  {id:1,name:"ETB Méga Évolution – Équilibre Parfait",type:"ETB / Coffret",serie:"Équilibre Parfait",achat:59.99,qty:2,statut:"scelle",marche:null,img:"https://chocobonplan.com/wp-content/uploads/2026/02/etb-pokemon-me03-equilibre-parfait-visuel-produit-300x300.png",watched:true,log:[],alerts:{seuil:5,target:null,on:true}},
+  {id:2,name:"Booster Faille Paradoxe",type:"Booster",serie:"Faille Paradoxe",achat:5.99,qty:2,statut:"scelle",marche:null,img:"https://www.relictcg.com/cdn/shop/files/2.jpg?v=1697635701",watched:false,log:[],alerts:{seuil:10,target:null,on:false}},
+  {id:3,name:"Booster Épée et Bouclier",type:"Booster",serie:"Épée et Bouclier",achat:5.99,qty:2,statut:"scelle",marche:null,img:"https://static.pkmcards.fr/products/fr/boosters/image-cartes-a-collectionner-pokemon-card-game-tcg-pkmcards-booster-epee-et-bouclier-stars-etincelantes-dracaufeu.webp",watched:false,log:[],alerts:{seuil:10,target:null,on:false}},
+  {id:4,name:"Bundle Équilibre Parfait",type:"ETB / Coffret",serie:"Équilibre Parfait",achat:38.99,qty:1,statut:"scelle",marche:null,img:"https://www.pokezenith.com/1226-home_default/pokemon-bundle-de-6-boosters-me03-equilibre-parfait.jpg",watched:false,log:[],alerts:{seuil:5,target:null,on:false}},
+  {id:5,name:"Tripack Équilibre Parfait",type:"ETB / Coffret",serie:"Équilibre Parfait",achat:17.99,qty:1,statut:"scelle",marche:null,img:"https://www.hobby-max.fr/91160-large_default/equilibre-parfait-tripack-pokemon.jpg",watched:false,log:[],alerts:{seuil:8,target:null,on:false}},
+  {id:6,name:"Coffret Pins Héros Transcendants",type:"ETB / Coffret",serie:"Héros Transcendants",achat:40.80,qty:1,statut:"scelle",marche:null,img:"https://www.ludifolie.com/64326-thickbox_default/pokemon-coffret-collection-pin-s-heros-transcendants.jpg",watched:true,log:[],alerts:{seuil:5,target:38,on:true}},
+  {id:7,name:"Booster ME03 Équilibre Parfait",type:"Booster",serie:"Équilibre Parfait",achat:6.99,qty:2,statut:"scelle",marche:null,img:"https://www.ludifolie.com/64520-thickbox_default/pokemon-me03-equilibre-parfait-booster.jpg",watched:false,log:[],alerts:{seuil:10,target:null,on:false}},
 ]);
-items.forEach(i=>{if(!i.log)i.log=[];if(!i.alerts)i.alerts={seuil:5,target:null,on:false};});
+items.forEach(i=>{if(!i.log)i.log=[];if(!i.alerts)i.alerts={seuil:5,target:null,on:false};if(!i.statut)i.statut='scelle';if(i.achat===undefined)i.achat=0;});
 if(items.length) nid = Math.max(...items.map(i=>i.id))+1;
 
 let alerts = ls(SKA, []);
@@ -489,6 +512,13 @@ function goPage(id, btn){
 // ═══════════════════════════════════════════════════════════════
 // RENDER PORTFOLIO
 // ═══════════════════════════════════════════════════════════════
+function toggleStatut(id){
+  const item=items.find(i=>i.id===id);
+  if(!item)return;
+  item.statut=item.statut==='scelle'?'ouvert':'scelle';
+  save();renderPort();updateKPIs();
+  toast(item.statut==='ouvert'?'🔓 Marqué comme ouvert':'📦 Marqué comme scellé', item.statut==='scelle'?'s':'w');
+}
 function setFilter(f,btn){filter=f;document.querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));btn.classList.add('on');renderPort();}
 
 function badgeCls(t){return t==='ETB / Coffret'?'b-etb':t==='Booster'?'b-bst':t==='Carte single'?'b-sgl':'b-cof';}
@@ -506,7 +536,7 @@ function sparkHtml(log){
 
 function renderPort(){
   const list=document.getElementById('port-list');
-  const shown=filter==='all'?items:items.filter(i=>i.type===filter);
+  const shown=filter==='all'?items:filter==='scelle'||filter==='ouvert'?items.filter(i=>(i.statut||'scelle')===filter):items.filter(i=>i.type===filter);
   if(!shown.length){
     list.innerHTML='<div class="empty"><div class="empty-ico">🎴</div><div class="empty-t">AUCUN ITEM</div><div class="empty-s">Clique sur "Ajouter un item" pour commencer</div></div>';
     updateKPIs();return;
@@ -524,11 +554,12 @@ function renderPort(){
     }
     let pvHtml='<span class="pv" style="color:var(--m2)">—</span>';
     if(item.marche){const pv=(item.marche-item.achat)*(item.qty||1);pvHtml=`<span class="pv ${pv>=0?'pos':'neg'}">${pv>=0?'+':''}${pv.toFixed(2)}€</span>`;}
-    return`<div class="tr">
+    const st=item.statut||'scelle';
+    return`<div class="tr ${st==='ouvert'?'is-ouvert':''} ">
       <div>${thumb}</div>
       <div>
         <div class="item-name">${item.name}</div>
-        <div class="item-sub"><span class="badge ${badgeCls(item.type)}">${item.type}</span><span class="item-serie">${item.serie||''}</span></div>
+        <div class="item-sub"><span class="badge ${badgeCls(item.type)}">${item.type}</span><span class="item-serie">${item.serie||''}</span><button class="statut-btn s-${st}" onclick="toggleStatut(${item.id})">${st==='scelle'?'📦 Scellé':'🔓 Ouvert'}</button></div>
       </div>
       <div class="cell-inv"><span class="mono muted">${inv}€</span><br><span style="font-size:10px;color:var(--m2)">×${item.qty||1}</span></div>
       <div>${mktVal}</div>
@@ -570,7 +601,9 @@ function updateKPIs(){
   const ta=wp.reduce((s,i)=>s+i.achat*(i.qty||1),0);
   const pv=tm-ta;
   document.getElementById('k-n').textContent=items.length;
-  document.getElementById('k-n2').textContent=items.filter(i=>i.watched).length+' en watchlist';
+  const nScelle=items.filter(i=>(i.statut||'scelle')==='scelle').length;
+  const nOuvert=items.filter(i=>i.statut==='ouvert').length;
+  document.getElementById('k-n2').textContent=nScelle+'📦 scellés · '+nOuvert+'🔓 ouverts';
   document.getElementById('k-inv').textContent=ti.toFixed(2)+' €';
   document.getElementById('k-inv2').textContent=items.reduce((s,i)=>s+(i.qty||1),0)+' unités';
   if(wp.length){
@@ -806,6 +839,8 @@ function openModal(mode='portfolio'){
 function closeModal(){
   document.getElementById('overlay').classList.remove('open');
   ['m-search','m-name','m-serie','m-img'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const hitCb=document.getElementById('m-hit');if(hitCb){hitCb.checked=false;document.getElementById('m-achat').disabled=false;}
+  const statEl=document.getElementById('m-statut');if(statEl)statEl.value='scelle';
   ['m-achat','m-marche'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   document.getElementById('m-qty').value='1';
   document.getElementById('sr-box').style.display='none';
@@ -851,18 +886,28 @@ function pickCard(c){
   document.getElementById('m-search').value=c.name;
 }
 
+function toggleHit(){
+  const cb=document.getElementById('m-hit');
+  const achat=document.getElementById('m-achat');
+  const statut=document.getElementById('m-statut');
+  if(cb.checked){achat.value='0';achat.disabled=true;statut.value='ouvert';document.getElementById('m-type').value='Carte single';}
+  else{achat.value='';achat.disabled=false;}
+}
 function submitItem(){
   const name=document.getElementById('m-name').value.trim();
   const type=document.getElementById('m-type').value;
   const serie=document.getElementById('m-serie').value.trim();
-  const achat=parseFloat(document.getElementById('m-achat').value);
+  const achatRaw=document.getElementById('m-achat').value;
+  const achat=achatRaw===''||achatRaw===null?0:parseFloat(achatRaw)||0;
+  const isHit=document.getElementById('m-hit').checked;
   const qty=parseInt(document.getElementById('m-qty').value)||1;
   const marche=parseFloat(document.getElementById('m-marche').value)||null;
   const img=document.getElementById('m-img').value.trim()||null;
   const watch=modalMode==='watchlist'||document.getElementById('m-watch').value==='1';
   if(!name)return toast('Entre un nom','e');
-  if(!achat||achat<=0)return toast('Entre un prix d\'achat valide','e');
-  const item={id:nid++,name,type,serie,achat,qty,marche,img,watched:watch,log:marche?[{t:new Date().toISOString(),p:marche}]:[],alerts:{seuil:5,target:null,on:false}};
+  // achat can be 0 for hit cards
+  const statut=document.getElementById('m-statut').value;
+  const item={id:nid++,name,type,serie,achat,qty,statut,marche,img,watched:watch,log:marche?[{t:new Date().toISOString(),p:marche}]:[],alerts:{seuil:5,target:null,on:false},hit:isHit};
   items.push(item);
   save();closeModal();
   renderPort();updateKPIs();updateSidebar();updateBadges();
