@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PokéTracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#08080e;--s1:#0f0f17;--s2:#15151f;--s3:#1c1c28;
+  --b1:rgba(255,255,255,0.06);--b2:rgba(255,255,255,0.1);--b3:rgba(255,255,255,0.16);
+  --txt:#eeeef5;--m1:#9090aa;--m2:#5a5a72;
+  --yellow:#f5c518;--orange:#ff6b35;
+  --green:#22c55e;--gbg:rgba(34,197,94,0.1);--gbdr:rgba(34,197,94,0.25);
+  --red:#ef4444;--rbg:rgba(239,68,68,0.1);--rbdr:rgba(239,68,68,0.25);
+  --blue:#3b82f6;--bbg:rgba(59,130,246,0.1);
+  --purple:#a855f7;--pbg:rgba(168,85,247,0.1);
+  --amber:#f59e0b;--abg:rgba(245,158,11,0.1);
+  --fd:'Bebas Neue',sans-serif;--fb:'DM Sans',sans-serif;--fm:'DM Mono',monospace;
+  --r:10px;--r2:14px;--r3:18px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--txt);font-family:var(--fb);min-height:100vh;overflow-x:hidden;}
+body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,0.012) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.012) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0;}
+
+/* SIDEBAR */
+.sb{position:fixed;left:0;top:0;bottom:0;width:230px;background:var(--s1);border-right:1px solid var(--b1);z-index:200;display:flex;flex-direction:column;}
+.sb-logo{padding:22px 20px 18px;border-bottom:1px solid var(--b1);}
+.logo-main{font-family:var(--fd);font-size:28px;letter-spacing:3px;color:var(--yellow);line-height:1;}
+.logo-sub{font-size:10px;color:var(--m2);letter-spacing:0.12em;text-transform:uppercase;margin-top:4px;}
+.sb-nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:3px;overflow-y:auto;}
+.nav-sep{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--m2);padding:10px 12px 4px;}
+.ni{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r);cursor:pointer;font-size:13px;font-weight:500;color:var(--m1);transition:all 0.15s;border:1px solid transparent;background:none;width:100%;text-align:left;}
+.ni:hover{background:var(--s2);color:var(--txt);}
+.ni.on{background:rgba(245,197,24,0.08);color:var(--yellow);border-color:rgba(245,197,24,0.18);}
+.ni svg{flex-shrink:0;}
+.ni-badge{margin-left:auto;font-size:10px;font-weight:700;padding:1px 7px;border-radius:99px;min-width:18px;text-align:center;}
+.ni-badge.red{background:var(--red);color:#fff;}
+.ni-badge.yellow{background:var(--yellow);color:#000;}
+.sb-stats{padding:14px 16px;border-top:1px solid var(--b1);display:flex;flex-direction:column;gap:6px;}
+.sb-stat{display:flex;justify-content:space-between;align-items:center;}
+.sb-stat-label{font-size:11px;color:var(--m2);}
+.sb-stat-val{font-family:var(--fm);font-size:12px;font-weight:500;color:var(--txt);}
+.sb-stat-val.pos{color:var(--green);}
+.sb-stat-val.neg{color:var(--red);}
+
+/* MAIN */
+.main{margin-left:230px;position:relative;z-index:1;min-height:100vh;}
+.page{display:none;padding:2rem 2.5rem;}
+.page.on{display:block;}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:2rem;gap:12px;flex-wrap:wrap;}
+.page-title{font-family:var(--fd);font-size:38px;letter-spacing:2px;line-height:1;color:var(--txt);}
+.page-title em{color:var(--yellow);font-style:normal;}
+.page-desc{font-size:13px;color:var(--m1);margin-top:6px;}
+.topbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+
+/* BUTTONS */
+.btn{font-family:var(--fb);font-size:13px;font-weight:500;padding:8px 16px;border-radius:var(--r);cursor:pointer;transition:all 0.15s;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--b2);background:var(--s2);color:var(--txt);}
+.btn:hover{background:var(--s3);border-color:var(--b3);}
+.btn:active{transform:scale(0.97);}
+.btn-y{background:var(--yellow);border-color:var(--yellow);color:#000;font-weight:600;}
+.btn-y:hover{background:#ffd740;border-color:#ffd740;}
+.btn-g{background:var(--gbg);border-color:var(--gbdr);color:var(--green);}
+.btn-g:hover{background:rgba(34,197,94,0.18);}
+.btn-r{background:var(--rbg);border-color:var(--rbdr);color:var(--red);}
+.btn-r:hover{background:rgba(239,68,68,0.18);}
+.btn-sm{font-size:12px;padding:6px 12px;}
+
+/* KPI STRIP */
+.kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:2rem;}
+.kpi{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r2);padding:1rem 1.2rem;position:relative;overflow:hidden;}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;opacity:.7;}
+.kpi:nth-child(1)::before{background:var(--yellow);}
+.kpi:nth-child(2)::before{background:var(--blue);}
+.kpi:nth-child(3)::before{background:var(--green);}
+.kpi:nth-child(4)::before{background:var(--purple);}
+.kpi-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.09em;color:var(--m2);margin-bottom:5px;}
+.kpi-num{font-family:var(--fm);font-size:22px;font-weight:500;color:var(--txt);}
+.kpi-num.pos{color:var(--green);}
+.kpi-num.neg{color:var(--red);}
+.kpi-hint{font-size:11px;color:var(--m2);margin-top:3px;}
+
+/* SECTION HEADER */
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;}
+.sec-title{font-family:var(--fd);font-size:18px;letter-spacing:1px;color:var(--m1);}
+.pills{display:flex;gap:5px;}
+.pill{background:var(--s1);border:1px solid var(--b1);color:var(--m2);font-size:11px;font-weight:600;padding:4px 12px;border-radius:99px;cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.05em;}
+.pill:hover{border-color:var(--b2);color:var(--txt);}
+.pill.on{background:var(--yellow);border-color:var(--yellow);color:#000;}
+
+/* TABLE */
+.table-wrap{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r2);overflow:hidden;}
+.th{display:grid;grid-template-columns:56px 1fr 105px 115px 105px 100px 90px 68px;padding:9px 16px;border-bottom:1px solid var(--b1);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--m2);}
+.tr{display:grid;grid-template-columns:56px 1fr 105px 115px 105px 100px 90px 68px;padding:11px 16px;border-bottom:1px solid var(--b1);align-items:center;transition:background .1s;animation:fadeUp .22s ease;}
+.tr:last-child{border-bottom:none;}
+.tr:hover{background:var(--s2);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+/* ITEM VISUALS */
+.item-img{width:46px;height:46px;border-radius:8px;object-fit:cover;background:var(--s2);border:1px solid var(--b1);}
+.item-img-ph{width:46px;height:46px;border-radius:8px;background:var(--s2);border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;font-size:24px;}
+.item-name{font-size:13px;font-weight:500;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;}
+.item-sub{display:flex;align-items:center;gap:5px;margin-top:3px;}
+.badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}
+.b-etb{background:var(--bbg);color:#60a5fa;}
+.b-bst{background:var(--gbg);color:#4ade80;}
+.b-sgl{background:var(--abg);color:var(--amber);}
+.b-cof{background:var(--pbg);color:#c084fc;}
+.item-serie{font-size:10px;color:var(--m2);}
+
+/* CELLS */
+.mono{font-family:var(--fm);font-size:13px;font-weight:500;}
+.muted{color:var(--m2);}
+.price-editable{font-family:var(--fm);font-size:13px;font-weight:500;color:var(--txt);background:none;border:1px solid transparent;border-radius:6px;padding:4px 7px;width:95px;outline:none;transition:all .15s;cursor:pointer;}
+.price-editable:hover{border-color:var(--b2);background:var(--s2);}
+.price-editable:focus{border-color:var(--yellow);background:var(--s3);cursor:text;}
+.delta{font-family:var(--fm);font-size:12px;font-weight:500;}
+.delta.up{color:var(--green);}
+.delta.dn{color:var(--red);}
+.delta.nt{color:var(--m2);}
+.pv{font-family:var(--fm);font-size:12px;font-weight:500;}
+.pv.pos{color:var(--green);}
+.pv.neg{color:var(--red);}
+
+/* SPARKLINE */
+.spark{display:flex;align-items:flex-end;gap:2px;height:28px;}
+.sp{width:5px;border-radius:2px 2px 0 0;background:var(--b2);min-height:3px;}
+.sp.up{background:rgba(34,197,94,.5);}
+.sp.dn{background:rgba(239,68,68,.45);}
+
+/* ROW ACTIONS */
+.row-acts{display:flex;gap:4px;justify-content:flex-end;}
+.ib{width:27px;height:27px;border-radius:7px;border:1px solid var(--b1);background:none;color:var(--m2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;}
+.ib:hover{border-color:var(--b3);color:var(--txt);background:var(--s2);}
+.ib.danger:hover{border-color:var(--rbdr);color:var(--red);}
+.ib.watch-on{color:var(--yellow);border-color:rgba(245,197,24,.3);background:rgba(245,197,24,.07);}
+
+/* EMPTY */
+.empty{padding:3.5rem;text-align:center;}
+.empty-ico{font-size:44px;margin-bottom:1rem;}
+.empty-t{font-family:var(--fd);font-size:26px;letter-spacing:1px;margin-bottom:8px;}
+.empty-s{font-size:13px;color:var(--m1);line-height:1.6;}
+
+/* WATCHLIST */
+.watch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
+.wcard{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r2);overflow:hidden;transition:border-color .15s;}
+.wcard:hover{border-color:var(--b2);}
+.wcard.alert-on{border-color:rgba(245,197,24,.2);background:linear-gradient(160deg,var(--s1) 70%,rgba(245,197,24,.03) 100%);}
+.wcard-top{padding:14px 14px 10px;display:flex;align-items:flex-start;gap:10px;}
+.wcard-img{width:50px;height:50px;border-radius:8px;object-fit:cover;background:var(--s2);border:1px solid var(--b1);flex-shrink:0;}
+.wcard-img-ph{width:50px;height:50px;border-radius:8px;background:var(--s2);border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+.wcard-name{font-size:13px;font-weight:500;color:var(--txt);line-height:1.3;margin-bottom:4px;}
+.wcard-prices{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--b1);}
+.wcard-price-cell{background:var(--s1);padding:10px 14px;}
+.wcp-label{font-size:10px;color:var(--m2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.wcp-val{font-family:var(--fm);font-size:15px;font-weight:500;}
+/* History chart */
+.wcard-chart{padding:10px 14px 6px;border-top:1px solid var(--b1);}
+.wcard-chart-title{font-size:10px;color:var(--m2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;display:flex;justify-content:space-between;}
+.chart-bars{display:flex;align-items:flex-end;gap:3px;height:48px;}
+.cb{flex:1;border-radius:3px 3px 0 0;min-height:4px;position:relative;cursor:pointer;}
+.cb:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:var(--s3);border:1px solid var(--b2);border-radius:5px;padding:3px 7px;font-size:10px;font-family:var(--fm);white-space:nowrap;z-index:10;color:var(--txt);}
+/* Alert section */
+.wcard-alert{padding:10px 14px 14px;border-top:1px solid var(--b1);}
+.alert-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--m2);margin-bottom:8px;}
+.alert-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.alert-row label{font-size:12px;color:var(--m1);flex:1;}
+.al-input{width:76px;background:var(--s3);border:1px solid var(--b2);border-radius:6px;color:var(--txt);font-family:var(--fm);font-size:12px;padding:5px 8px;outline:none;transition:border-color .15s;}
+.al-input:focus{border-color:var(--yellow);}
+.toggle{width:36px;height:20px;background:var(--s3);border:1px solid var(--b2);border-radius:99px;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;}
+.toggle.on{background:var(--green);border-color:var(--green);}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;background:#fff;border-radius:50%;transition:left .18s;}
+.toggle.on::after{left:18px;}
+.wcard-footer{padding:0 14px 12px;display:flex;gap:6px;}
+/* Update price inline */
+.wcard-update{padding:8px 14px;border-top:1px solid var(--b1);display:flex;align-items:center;gap:8px;}
+.wcard-update input{flex:1;background:var(--s3);border:1px solid var(--b2);border-radius:6px;color:var(--txt);font-family:var(--fm);font-size:13px;padding:7px 10px;outline:none;}
+.wcard-update input:focus{border-color:var(--yellow);}
+
+/* ALERTS PAGE */
+.alert-feed{display:flex;flex-direction:column;gap:8px;}
+.af-item{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r2);padding:1rem 1.2rem;display:flex;align-items:center;gap:12px;animation:fadeUp .2s ease;}
+.af-item.new{border-left:3px solid var(--yellow);}
+.af-item.new.up-t{border-left-color:var(--green);}
+.af-item.new.dn-t{border-left-color:var(--red);}
+.af-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.af-ico.up-t{background:var(--gbg);}
+.af-ico.dn-t{background:var(--rbg);}
+.af-ico.tg-t{background:var(--abg);}
+.af-ico.hi-t{background:var(--pbg);}
+.af-body{flex:1;}
+.af-title{font-size:13px;font-weight:500;color:var(--txt);}
+.af-desc{font-size:12px;color:var(--m1);margin-top:2px;}
+.af-time{font-family:var(--fm);font-size:11px;color:var(--m2);white-space:nowrap;}
+.af-tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;text-transform:uppercase;margin-left:8px;}
+.tag-up{background:var(--gbg);color:var(--green);}
+.tag-dn{background:var(--rbg);color:var(--red);}
+.tag-tg{background:var(--abg);color:var(--amber);}
+.tag-hi{background:var(--pbg);color:var(--purple);}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);backdrop-filter:blur(8px);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--s1);border:1px solid var(--b2);border-radius:var(--r3);padding:2rem;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;transform:translateY(10px);transition:transform .2s;}
+.overlay.open .modal{transform:translateY(0);}
+.modal-title{font-family:var(--fd);font-size:28px;letter-spacing:1px;color:var(--yellow);margin-bottom:1.5rem;}
+.fg{margin-bottom:.9rem;}
+.fl{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--m2);margin-bottom:5px;}
+.fi,.fs{width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:var(--r);color:var(--txt);font-family:var(--fb);font-size:13px;padding:9px 12px;outline:none;transition:border-color .15s;}
+.fi:focus,.fs:focus{border-color:var(--yellow);}
+.fs option{background:var(--s2);}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.modal-foot{display:flex;gap:8px;margin-top:1.5rem;justify-content:flex-end;}
+/* Search results */
+.sr-box{border:1px solid var(--b1);border-radius:var(--r);overflow:hidden;max-height:190px;overflow-y:auto;margin-top:6px;display:none;}
+.sr-item{padding:9px 12px;display:flex;align-items:center;gap:9px;cursor:pointer;border-bottom:1px solid var(--b1);transition:background .1s;font-size:13px;}
+.sr-item:last-child{border-bottom:none;}
+.sr-item:hover{background:var(--s2);}
+.sr-img{width:32px;height:32px;border-radius:5px;object-fit:cover;background:var(--s2);}
+.sr-name{font-weight:500;color:var(--txt);}
+.sr-set{font-size:11px;color:var(--m2);}
+.sr-price{font-family:var(--fm);font-size:12px;color:var(--yellow);margin-left:auto;}
+.loading-line{padding:10px 12px;font-size:12px;color:var(--m2);display:flex;align-items:center;gap:8px;}
+/* hint */
+.hint{font-size:11px;color:var(--m2);margin-top:4px;font-style:italic;}
+
+/* TOAST STACK */
+.toasts{position:fixed;bottom:22px;right:22px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+.toast{background:var(--s2);border:1px solid var(--b2);border-radius:var(--r2);padding:10px 15px;font-size:13px;color:var(--txt);min-width:250px;transform:translateX(115%);transition:transform .3s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;gap:9px;pointer-events:all;}
+.toast.show{transform:translateX(0);}
+.toast.s{border-color:var(--gbdr);}
+.toast.e{border-color:var(--rbdr);}
+.toast.w{border-color:rgba(245,158,11,.35);}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
+
+/* RESPONSIVE */
+@media(max-width:1100px){
+  .th,.tr{grid-template-columns:50px 1fr 110px 105px 90px 65px;}
+  .col-pv,.col-sp,.cell-pv,.cell-sp{display:none;}
+}
+@media(max-width:780px){
+  .sb{width:58px;}
+  .logo-main,.logo-sub,.ni span,.ni-badge,.sb-stats{display:none;}
+  .ni{justify-content:center;padding:10px;}
+  .main{margin-left:58px;}
+  .page{padding:1.2rem;}
+  .kpi-strip{grid-template-columns:1fr 1fr;}
+  .th,.tr{grid-template-columns:44px 1fr 100px 58px;}
+  .col-inv,.col-delta,.cell-inv,.cell-delta{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══════════════════════════════════════════════════ -->
+<aside class="sb">
+  <div class="sb-logo">
+    <div class="logo-main">PokéTrack</div>
+    <div class="logo-sub">TCG Market</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="nav-sep">Collection</div>
+    <button class="ni on" onclick="goPage('portfolio',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      <span>Mon Portfolio</span>
+    </button>
+    <div class="nav-sep">Marché</div>
+    <button class="ni" onclick="goPage('watchlist',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <span>Watchlist</span>
+      <span class="ni-badge yellow" id="wbadge" style="display:none">0</span>
+    </button>
+    <button class="ni" onclick="goPage('alerts',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span>Alertes</span>
+      <span class="ni-badge red" id="abadge" style="display:none">0</span>
+    </button>
+  </nav>
+  <div class="sb-stats">
+    <div class="sb-stat"><span class="sb-stat-label">Investi</span><span class="sb-stat-val" id="sb-inv">—</span></div>
+    <div class="sb-stat"><span class="sb-stat-label">Marché</span><span class="sb-stat-val" id="sb-mkt">—</span></div>
+    <div class="sb-stat"><span class="sb-stat-label">+/−</span><span class="sb-stat-val" id="sb-pv">—</span></div>
+  </div>
+</aside>
+
+<!-- ══ MAIN ═════════════════════════════════════════════════════ -->
+<div class="main">
+
+  <!-- PAGE PORTFOLIO -->
+  <div class="page on" id="page-portfolio">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Mon <em>Portfolio</em></div>
+        <div class="page-desc">Clique sur un prix marché pour le modifier • 👁 pour surveiller • Supprime ce que tu ouvres</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-y" onclick="openModal('portfolio')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Ajouter un item
+        </button>
+      </div>
+    </div>
+
+    <div class="kpi-strip">
+      <div class="kpi"><div class="kpi-lbl">Items suivis</div><div class="kpi-num" id="k-n">0</div><div class="kpi-hint" id="k-n2"></div></div>
+      <div class="kpi"><div class="kpi-lbl">Total investi</div><div class="kpi-num" id="k-inv">—</div><div class="kpi-hint" id="k-inv2"></div></div>
+      <div class="kpi"><div class="kpi-lbl">Valeur marché</div><div class="kpi-num" id="k-mkt">—</div><div class="kpi-hint" id="k-mkt2"></div></div>
+      <div class="kpi"><div class="kpi-lbl">Plus-value latente</div><div class="kpi-num" id="k-pv">—</div><div class="kpi-hint" id="k-pv2"></div></div>
+    </div>
+
+    <div class="sec-head">
+      <div class="sec-title">Tous les items</div>
+      <div class="pills">
+        <button class="pill on" onclick="setFilter('all',this)">Tout</button>
+        <button class="pill" onclick="setFilter('ETB / Coffret',this)">ETB</button>
+        <button class="pill" onclick="setFilter('Booster',this)">Boosters</button>
+        <button class="pill" onclick="setFilter('Carte single',this)">Singles</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="th">
+        <div></div>
+        <div>Produit</div>
+        <div class="col-inv">Investi</div>
+        <div>Prix marché ✎</div>
+        <div class="col-delta">Évolution</div>
+        <div class="col-pv">+/−</div>
+        <div class="col-sp">Historique</div>
+        <div></div>
+      </div>
+      <div id="port-list"></div>
+    </div>
+  </div>
+
+  <!-- PAGE WATCHLIST -->
+  <div class="page" id="page-watchlist">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Ma <em>Watchlist</em></div>
+        <div class="page-desc">Surveille des items et reçois des alertes quand les prix bougent</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-y" onclick="openModal('watchlist')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Ajouter à surveiller
+        </button>
+      </div>
+    </div>
+    <div id="notif-zone"></div>
+    <div class="watch-grid" id="watch-grid"></div>
+    <div id="watch-empty" style="display:none">
+      <div class="empty"><div class="empty-ico">👁</div><div class="empty-t">WATCHLIST VIDE</div><div class="empty-s">Ajoute un item à surveiller depuis le bouton ci-dessus<br>ou clique sur 👁 dans le Portfolio</div></div>
+    </div>
+  </div>
+
+  <!-- PAGE ALERTES -->
+  <div class="page" id="page-alerts">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Mes <em>Alertes</em></div>
+        <div class="page-desc">Historique de toutes tes alertes de prix</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-sm" onclick="clearAlerts()">Tout marquer lu</button>
+        <button class="btn btn-sm btn-r" onclick="deleteAllAlerts()">Vider</button>
+      </div>
+    </div>
+    <div class="alert-feed" id="alert-feed"></div>
+    <div id="alert-empty" style="display:none">
+      <div class="empty"><div class="empty-ico">🔔</div><div class="empty-t">AUCUNE ALERTE</div><div class="empty-s">Les alertes apparaissent ici quand un prix change<br>ou atteint ton seuil cible</div></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ MODAL ═════════════════════════════════════════════════════ -->
+<div class="overlay" id="overlay" onclick="closeOuter(event)">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Ajouter un item</div>
+
+    <div class="fg">
+      <label class="fl">🔍 Rechercher une carte (optionnel)</label>
+      <input class="fi" id="m-search" type="text" placeholder="Charizard ex, Pikachu V, Rayquaza..." oninput="onSearch()" autocomplete="off"/>
+      <div class="sr-box" id="sr-box"></div>
+      <div class="hint">Tape un nom de carte pour auto-compléter depuis la base TCG</div>
+    </div>
+
+    <div class="fr">
+      <div class="fg">
+        <label class="fl">Nom *</label>
+        <input class="fi" id="m-name" type="text" placeholder="Nom du produit"/>
+      </div>
+      <div class="fg">
+        <label class="fl">Type *</label>
+        <select class="fs" id="m-type">
+          <option>ETB / Coffret</option>
+          <option>Booster</option>
+          <option>Carte single</option>
+        </select>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="fg">
+        <label class="fl">Série / Extension</label>
+        <input class="fi" id="m-serie" type="text" placeholder="ex: Équilibre Parfait"/>
+      </div>
+      <div class="fg">
+        <label class="fl">Prix d'achat € *</label>
+        <input class="fi" id="m-achat" type="number" step="0.01" min="0" placeholder="0.00"/>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="fg">
+        <label class="fl">Quantité</label>
+        <input class="fi" id="m-qty" type="number" min="1" value="1"/>
+      </div>
+      <div class="fg">
+        <label class="fl">Prix marché actuel €</label>
+        <input class="fi" id="m-marche" type="number" step="0.01" min="0" placeholder="(optionnel)"/>
+      </div>
+    </div>
+    <div class="fg">
+      <label class="fl">Image URL (auto si carte trouvée)</label>
+      <input class="fi" id="m-img" type="text" placeholder="https://..."/>
+    </div>
+    <div class="fg" id="m-watch-row">
+      <label class="fl">Ajouter aussi à la Watchlist ?</label>
+      <select class="fs" id="m-watch">
+        <option value="0">Non — juste au portfolio</option>
+        <option value="1">Oui — surveiller les prix</option>
+      </select>
+    </div>
+
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-y" onclick="submitItem()">Ajouter ✓</button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// STORAGE & STATE
+// ═══════════════════════════════════════════════════════════════
+const SK = 'pkt_final_v1', SKA = 'pkt_alerts_v1';
+const TCG_API = 'https://api.pokemontcg.io/v2';
+let nid = 500, filter = 'all', srTimer = null, modalMode = 'portfolio';
+
+function ls(k,d){try{const r=localStorage.getItem(k);return r?JSON.parse(r):d;}catch(e){return d;}}
+function ss(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+
+let items = ls(SK, [
+  {id:1,name:"ETB Méga Évolution – Équilibre Parfait",type:"ETB / Coffret",serie:"Équilibre Parfait",achat:59.99,qty:2,marche:null,img:null,watched:true,log:[],alerts:{seuil:5,target:null,on:true}},
+  {id:2,name:"Booster Faille Paradoxe",type:"Booster",serie:"Faille Paradoxe",achat:5.99,qty:2,marche:null,img:null,watched:false,log:[],alerts:{seuil:10,target:null,on:false}},
+  {id:3,name:"Booster Épée et Bouclier",type:"Booster",serie:"Épée et Bouclier",achat:5.99,qty:2,marche:null,img:null,watched:false,log:[],alerts:{seuil:10,target:null,on:false}},
+  {id:4,name:"Bundle Équilibre Parfait",type:"ETB / Coffret",serie:"Équilibre Parfait",achat:38.99,qty:1,marche:null,img:null,watched:false,log:[],alerts:{seuil:5,target:null,on:false}},
+  {id:5,name:"Tripack Équilibre Parfait",type:"ETB / Coffret",serie:"Équilibre Parfait",achat:17.99,qty:1,marche:null,img:null,watched:false,log:[],alerts:{seuil:8,target:null,on:false}},
+  {id:6,name:"Coffret Pins Héros Transcendants",type:"ETB / Coffret",serie:"Héros Transcendants",achat:40.80,qty:1,marche:null,img:null,watched:true,log:[],alerts:{seuil:5,target:38,on:true}},
+  {id:7,name:"Booster ME03 Équilibre Parfait",type:"Booster",serie:"Équilibre Parfait",achat:6.99,qty:2,marche:null,img:null,watched:false,log:[],alerts:{seuil:10,target:null,on:false}},
+]);
+items.forEach(i=>{if(!i.log)i.log=[];if(!i.alerts)i.alerts={seuil:5,target:null,on:false};});
+if(items.length) nid = Math.max(...items.map(i=>i.id))+1;
+
+let alerts = ls(SKA, []);
+
+function save(){ss(SK,items);ss(SKA,alerts);}
+
+// ═══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+function goPage(id, btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
+  document.getElementById('page-'+id).classList.add('on');
+  if(btn) btn.classList.add('on');
+  if(id==='watchlist'){renderWatch();renderNotifBanner();}
+  if(id==='alerts') renderAlerts();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER PORTFOLIO
+// ═══════════════════════════════════════════════════════════════
+function setFilter(f,btn){filter=f;document.querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));btn.classList.add('on');renderPort();}
+
+function badgeCls(t){return t==='ETB / Coffret'?'b-etb':t==='Booster'?'b-bst':t==='Carte single'?'b-sgl':'b-cof';}
+
+function sparkHtml(log){
+  if(!log||log.length<2) return '<div class="spark">'+Array(8).fill('<div class="sp"></div>').join('')+'</div>';
+  const pts=log.slice(-10).map(e=>e.p);
+  const mn=Math.min(...pts),mx=Math.max(...pts),r=mx-mn||1;
+  return '<div class="spark">'+pts.map((v,i,a)=>{
+    const h=Math.max(6,Math.round(((v-mn)/r)*100));
+    const cls=i===a.length-1?(v>=a[0]?'up':'dn'):(v>=(a[i-1]||v)?'up':'dn');
+    return`<div class="sp ${cls}" style="height:${h}%"></div>`;
+  }).join('')+'</div>';
+}
+
+function renderPort(){
+  const list=document.getElementById('port-list');
+  const shown=filter==='all'?items:items.filter(i=>i.type===filter);
+  if(!shown.length){
+    list.innerHTML='<div class="empty"><div class="empty-ico">🎴</div><div class="empty-t">AUCUN ITEM</div><div class="empty-s">Clique sur "Ajouter un item" pour commencer</div></div>';
+    updateKPIs();return;
+  }
+  list.innerHTML=shown.map(item=>{
+    const thumb=item.img?`<img class="item-img" src="${item.img}" alt="" onerror="this.style.display='none'">`:`<div class="item-img-ph">🎴</div>`;
+    const inv=(item.achat*(item.qty||1)).toFixed(2);
+    const mktVal=item.marche?`<input class="price-editable" type="number" step="0.01" value="${item.marche.toFixed(2)}" onchange="updateMarche(${item.id},this.value)" onblur="updateMarche(${item.id},this.value)" title="Clique pour modifier">`:`<input class="price-editable" type="number" step="0.01" placeholder="Entrer prix €" onchange="updateMarche(${item.id},this.value)" title="Entre le prix Cardmarket">`;
+    // delta from log
+    let deltaHtml='<span class="delta nt">—</span>';
+    if(item.log&&item.log.length>=2&&item.marche){
+      const first=item.log[0].p,last=item.marche;
+      const pct=((last-first)/first*100).toFixed(1);
+      deltaHtml=`<span class="delta ${pct>=0?'up':'dn'}">${pct>=0?'+':''}${pct}%</span>`;
+    }
+    let pvHtml='<span class="pv" style="color:var(--m2)">—</span>';
+    if(item.marche){const pv=(item.marche-item.achat)*(item.qty||1);pvHtml=`<span class="pv ${pv>=0?'pos':'neg'}">${pv>=0?'+':''}${pv.toFixed(2)}€</span>`;}
+    return`<div class="tr">
+      <div>${thumb}</div>
+      <div>
+        <div class="item-name">${item.name}</div>
+        <div class="item-sub"><span class="badge ${badgeCls(item.type)}">${item.type}</span><span class="item-serie">${item.serie||''}</span></div>
+      </div>
+      <div class="cell-inv"><span class="mono muted">${inv}€</span><br><span style="font-size:10px;color:var(--m2)">×${item.qty||1}</span></div>
+      <div>${mktVal}</div>
+      <div class="cell-delta">${deltaHtml}</div>
+      <div class="cell-pv">${pvHtml}</div>
+      <div class="cell-sp">${sparkHtml(item.log)}</div>
+      <div class="row-acts">
+        <button class="ib ${item.watched?'watch-on':''}" onclick="toggleWatch(${item.id})" title="${item.watched?'Retirer watchlist':'Ajouter watchlist'}">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="${item.watched?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+        <button class="ib danger" onclick="deleteItem(${item.id})" title="Supprimer (item ouvert ou vendu)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+  updateKPIs();
+}
+
+function updateMarche(id, val){
+  const item=items.find(i=>i.id===id);
+  if(!item)return;
+  const p=parseFloat(val);
+  if(!p||p<=0)return;
+  const old=item.marche;
+  item.marche=p;
+  item.log.push({t:new Date().toISOString(),p});
+  if(item.log.length>90)item.log=item.log.slice(-90);
+  checkAlerts(item,old);
+  save();renderPort();updateKPIs();updateSidebar();
+  if(item.watched&&document.getElementById('page-watchlist').classList.contains('on'))renderWatch();
+  toast('Prix mis à jour : '+p.toFixed(2)+'€','s');
+}
+
+function updateKPIs(){
+  const ti=items.reduce((s,i)=>s+i.achat*(i.qty||1),0);
+  const wp=items.filter(i=>i.marche!=null);
+  const tm=wp.reduce((s,i)=>s+i.marche*(i.qty||1),0);
+  const ta=wp.reduce((s,i)=>s+i.achat*(i.qty||1),0);
+  const pv=tm-ta;
+  document.getElementById('k-n').textContent=items.length;
+  document.getElementById('k-n2').textContent=items.filter(i=>i.watched).length+' en watchlist';
+  document.getElementById('k-inv').textContent=ti.toFixed(2)+' €';
+  document.getElementById('k-inv2').textContent=items.reduce((s,i)=>s+(i.qty||1),0)+' unités';
+  if(wp.length){
+    document.getElementById('k-mkt').textContent=tm.toFixed(2)+' €';
+    document.getElementById('k-mkt2').textContent=wp.length+'/'+items.length+' avec prix';
+    const el=document.getElementById('k-pv');
+    el.textContent=(pv>=0?'+':'')+pv.toFixed(2)+' €';
+    el.className='kpi-num '+(pv>=0?'pos':'neg');
+    document.getElementById('k-pv2').textContent=ta>0?'Rendement : '+((pv/ta)*100).toFixed(1)+'%':'';
+  }
+}
+
+function updateSidebar(){
+  const ti=items.reduce((s,i)=>s+i.achat*(i.qty||1),0);
+  const wp=items.filter(i=>i.marche!=null);
+  const tm=wp.reduce((s,i)=>s+i.marche*(i.qty||1),0);
+  const pv=tm-items.filter(i=>i.marche!=null).reduce((s,i)=>s+i.achat*(i.qty||1),0);
+  document.getElementById('sb-inv').textContent=ti.toFixed(0)+'€';
+  document.getElementById('sb-mkt').textContent=wp.length?tm.toFixed(0)+'€':'—';
+  const pvEl=document.getElementById('sb-pv');
+  if(wp.length){pvEl.textContent=(pv>=0?'+':'')+pv.toFixed(0)+'€';pvEl.className='sb-stat-val '+(pv>=0?'pos':'neg');}
+  else{pvEl.textContent='—';pvEl.className='sb-stat-val';}
+}
+
+// ═══════════════════════════════════════════════════════════════
+// WATCHLIST
+// ═══════════════════════════════════════════════════════════════
+function toggleWatch(id){
+  const item=items.find(i=>i.id===id);
+  if(!item)return;
+  item.watched=!item.watched;
+  save();renderPort();updateBadges();
+  toast(item.watched?'👁 Ajouté à la watchlist':'Retiré de la watchlist',item.watched?'s':'');
+}
+
+function renderWatch(){
+  const watched=items.filter(i=>i.watched);
+  const grid=document.getElementById('watch-grid');
+  const empty=document.getElementById('watch-empty');
+  if(!watched.length){grid.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  grid.innerHTML=watched.map(item=>{
+    const thumb=item.img?`<img class="wcard-img" src="${item.img}" alt="" onerror="this.style.display='none'">`:`<div class="wcard-img-ph">🎴</div>`;
+    const mkt=item.marche?item.marche.toFixed(2)+' €':'—';
+    const pv=item.marche?(item.marche-item.achat)*(item.qty||1):null;
+    const pvStr=pv!=null?`<span style="color:${pv>=0?'var(--green)':'var(--red)'}">${pv>=0?'+':''}${pv.toFixed(2)}€</span>`:'—';
+    // delta
+    let dStr='—';
+    if(item.log&&item.log.length>=2&&item.marche){const f=item.log[0].p,l=item.marche,p=((l-f)/f*100).toFixed(1);dStr=`<span style="color:${p>=0?'var(--green)':'var(--red)'}">${p>=0?'+':''}${p}%</span>`;}
+    // chart
+    let chartHtml='<div style="color:var(--m2);font-size:11px;padding:6px 0;">Aucun historique — commence à entrer des prix</div>';
+    if(item.log&&item.log.length>=2){
+      const pts=item.log.slice(-20);
+      const mn=Math.min(...pts.map(e=>e.p)),mx=Math.max(...pts.map(e=>e.p)),r=mx-mn||0.01;
+      const last=pts[pts.length-1].p,first=pts[0].p;
+      const barColor=last>=first?'rgba(34,197,94,.55)':'rgba(239,68,68,.5)';
+      chartHtml='<div class="chart-bars">'+pts.map(e=>{
+        const h=Math.max(6,Math.round(((e.p-mn)/r)*100));
+        const d=new Date(e.t).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
+        return`<div class="cb" style="height:${h}%;background:${barColor};" data-tip="${e.p.toFixed(2)}€ — ${d}"></div>`;
+      }).join('')+'</div>';
+    }
+    const al=item.alerts||{};
+    return`<div class="wcard ${al.on?'alert-on':''}" id="wc-${item.id}">
+      <div class="wcard-top">
+        ${thumb}
+        <div>
+          <div class="wcard-name">${item.name}</div>
+          <div class="item-sub" style="margin-top:4px"><span class="badge ${badgeCls(item.type)}">${item.type}</span><span class="item-serie">${item.serie||''}</span></div>
+        </div>
+      </div>
+      <div class="wcard-prices">
+        <div class="wcard-price-cell"><div class="wcp-label">Investi</div><div class="wcp-val muted">${(item.achat*(item.qty||1)).toFixed(2)} €</div></div>
+        <div class="wcard-price-cell"><div class="wcp-label">Marché</div><div class="wcp-val" style="color:var(--yellow)">${mkt}</div></div>
+        <div class="wcard-price-cell"><div class="wcp-label">+/−</div><div class="wcp-val">${pvStr}</div></div>
+        <div class="wcard-price-cell"><div class="wcp-label">Évolution</div><div class="wcp-val" style="font-size:13px">${dStr}</div></div>
+      </div>
+      <div class="wcard-chart">
+        <div class="wcard-chart-title"><span>Historique des prix</span><span style="color:var(--m2)">${item.log?item.log.length:0} entrées</span></div>
+        ${chartHtml}
+      </div>
+      <div class="wcard-update">
+        <input type="number" step="0.01" placeholder="Nouveau prix marché €" id="wu-${item.id}" onkeydown="if(event.key==='Enter')saveWatchPrice(${item.id})"/>
+        <button class="btn btn-sm btn-g" onclick="saveWatchPrice(${item.id})">Enregistrer</button>
+      </div>
+      <div class="wcard-alert">
+        <div class="alert-label">⚡ Alertes prix</div>
+        <div class="alert-row">
+          <label>Alerte si baisse de</label>
+          <input class="al-input" type="number" value="${al.seuil||5}" min="1" max="99" onchange="setAlertSeuil(${item.id},this.value)"/> <span style="font-size:12px;color:var(--m2)">%</span>
+          <div class="toggle ${al.on?'on':''}" onclick="toggleAlertOn(${item.id})"></div>
+        </div>
+        <div class="alert-row">
+          <label>Prix cible (achat idéal)</label>
+          <input class="al-input" type="number" step="0.01" value="${al.target||''}" placeholder="€" onchange="setAlertTarget(${item.id},this.value)"/> <span style="font-size:12px;color:var(--m2)">€</span>
+        </div>
+      </div>
+      <div class="wcard-footer">
+        <button class="btn btn-sm btn-r" onclick="toggleWatch(${item.id})" style="flex:1">Retirer de la watchlist</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function saveWatchPrice(id){
+  const inp=document.getElementById('wu-'+id);
+  if(!inp)return;
+  const p=parseFloat(inp.value);
+  if(!p||p<=0){toast('Entre un prix valide','e');return;}
+  updateMarche(id,p);
+  inp.value='';
+}
+
+function setAlertSeuil(id,v){const item=items.find(i=>i.id===id);if(item){item.alerts.seuil=parseFloat(v)||5;save();}}
+function setAlertTarget(id,v){const item=items.find(i=>i.id===id);if(item){item.alerts.target=parseFloat(v)||null;save();}}
+function toggleAlertOn(id){
+  const item=items.find(i=>i.id===id);
+  if(!item)return;
+  item.alerts.on=!item.alerts.on;
+  save();renderWatch();
+  toast(item.alerts.on?'🔔 Alertes activées pour cet item':'Alertes désactivées',item.alerts.on?'s':'');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ALERT ENGINE
+// ═══════════════════════════════════════════════════════════════
+function checkAlerts(item,oldPrice){
+  if(!item.marche)return;
+  const p=item.marche,al=item.alerts,name=item.name.length>28?item.name.substring(0,26)+'…':item.name;
+  const newAlerts=[];
+
+  if(oldPrice&&al.on){
+    const chg=((p-oldPrice)/oldPrice)*100;
+    if(chg<=-( al.seuil||5)){
+      newAlerts.push({type:'dn-t',icon:'📉',title:`Baisse de ${Math.abs(chg).toFixed(1)}% : ${name}`,desc:`${oldPrice.toFixed(2)}€ → ${p.toFixed(2)}€`,tag:'Baisse',tagCls:'tag-dn'});
+    }
+    if(chg>=8){
+      newAlerts.push({type:'up-t',icon:'📈',title:`Hausse de +${chg.toFixed(1)}% : ${name}`,desc:`${oldPrice.toFixed(2)}€ → ${p.toFixed(2)}€`,tag:'Hausse',tagCls:'tag-up'});
+    }
+  }
+  if(al.target&&p<=al.target){
+    newAlerts.push({type:'tg-t',icon:'🎯',title:`Prix cible atteint : ${name}`,desc:`${p.toFixed(2)}€ ≤ objectif ${al.target.toFixed(2)}€`,tag:'Objectif',tagCls:'tag-tg'});
+  }
+  if(item.log.length>=3){
+    const hist=item.log.slice(0,-1).map(e=>e.p);
+    if(p<Math.min(...hist)){newAlerts.push({type:'tg-t',icon:'🏷️',title:`Record bas : ${name}`,desc:`${p.toFixed(2)}€ — plus bas depuis le début du suivi`,tag:'Record bas',tagCls:'tag-tg'});}
+    if(p>Math.max(...hist)){newAlerts.push({type:'hi-t',icon:'🚀',title:`Record haut : ${name}`,desc:`${p.toFixed(2)}€ — nouveau sommet historique !`,tag:'Record haut',tagCls:'tag-hi'});}
+  }
+
+  newAlerts.forEach(a=>{
+    alerts.unshift({id:Date.now()+Math.random(),itemId:item.id,...a,time:new Date().toISOString(),read:false});
+    toast(a.icon+' '+a.title,a.type==='up-t'||a.type==='hi-t'?'s':a.type==='dn-t'?'e':'w');
+    pushNotif(a.title,a.desc);
+  });
+  if(alerts.length>150)alerts=alerts.slice(0,150);
+  updateBadges();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PUSH NOTIFS
+// ═══════════════════════════════════════════════════════════════
+function pushNotif(title,body){
+  if(Notification&&Notification.permission==='granted'){
+    try{new Notification('PokéTracker 🎴',{body,icon:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'});}catch(e){}
+  }
+}
+async function askNotif(){
+  if(!('Notification' in window)){toast('Notifications non supportées','e');return;}
+  const p=await Notification.requestPermission();
+  renderNotifBanner();
+  if(p==='granted')toast('🔔 Notifications push activées !','s');
+  else toast('Notifications refusées — à activer dans les paramètres navigateur','e');
+}
+function renderNotifBanner(){
+  const z=document.getElementById('notif-zone');
+  if(!z)return;
+  if(Notification&&Notification.permission==='granted'){z.innerHTML='';return;}
+  z.innerHTML=`<div style="background:linear-gradient(135deg,rgba(245,197,24,.07),rgba(255,107,53,.04));border:1px solid rgba(245,197,24,.2);border-radius:var(--r2);padding:1rem 1.2rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:12px;">
+    <span style="font-size:22px">🔔</span>
+    <div style="flex:1">
+      <div style="font-size:13px;font-weight:500;color:var(--txt)">Active les notifications push</div>
+      <div style="font-size:12px;color:var(--m1);margin-top:2px">Reçois une alerte sur ton téléphone / PC dès qu'un prix atteint ton seuil</div>
+    </div>
+    <button class="btn btn-y btn-sm" onclick="askNotif()">Activer</button>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ALERTS PAGE
+// ═══════════════════════════════════════════════════════════════
+function renderAlerts(){
+  const feed=document.getElementById('alert-feed');
+  const empty=document.getElementById('alert-empty');
+  if(!alerts.length){feed.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  feed.innerHTML=alerts.slice(0,60).map(a=>{
+    const d=new Date(a.time);
+    const ts=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    return`<div class="af-item ${a.read?'':('new '+a.type)}">
+      <div class="af-ico ${a.type}">${a.icon||'🔔'}</div>
+      <div class="af-body">
+        <div class="af-title">${a.title}<span class="af-tag ${a.tagCls}">${a.tag}</span></div>
+        <div class="af-desc">${a.desc}</div>
+      </div>
+      <div class="af-time">${ts}</div>
+    </div>`;
+  }).join('');
+}
+function clearAlerts(){alerts.forEach(a=>a.read=true);save();updateBadges();renderAlerts();}
+function deleteAllAlerts(){alerts=[];save();updateBadges();renderAlerts();}
+
+// ═══════════════════════════════════════════════════════════════
+// BADGES
+// ═══════════════════════════════════════════════════════════════
+function updateBadges(){
+  const wc=items.filter(i=>i.watched).length;
+  const ac=alerts.filter(a=>!a.read).length;
+  const wb=document.getElementById('wbadge'),ab=document.getElementById('abadge');
+  wb.textContent=wc;wb.style.display=wc?'':'none';
+  ab.textContent=ac;ab.style.display=ac?'':'none';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════════════════════════
+function openModal(mode='portfolio'){
+  modalMode=mode;
+  document.getElementById('modal-title').textContent=mode==='watchlist'?'Ajouter à surveiller':'Ajouter un item';
+  document.getElementById('m-watch').value=mode==='watchlist'?'1':'0';
+  document.getElementById('m-watch-row').style.display=mode==='portfolio'?'':'none';
+  document.getElementById('overlay').classList.add('open');
+}
+function closeModal(){
+  document.getElementById('overlay').classList.remove('open');
+  ['m-search','m-name','m-serie','m-img'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['m-achat','m-marche'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('m-qty').value='1';
+  document.getElementById('sr-box').style.display='none';
+}
+function closeOuter(e){if(e.target.id==='overlay')closeModal();}
+
+function onSearch(){
+  clearTimeout(srTimer);
+  const q=document.getElementById('m-search').value.trim();
+  document.getElementById('m-name').value=q;
+  if(q.length<2){document.getElementById('sr-box').style.display='none';return;}
+  srTimer=setTimeout(()=>doSearch(q),420);
+}
+
+async function doSearch(q){
+  const box=document.getElementById('sr-box');
+  box.style.display='block';
+  box.innerHTML='<div class="loading-line"><div style="width:30px;height:10px;background:var(--s3);border-radius:3px;animation:fadeUp .5s infinite alternate"></div> Recherche…</div>';
+  try{
+    const r=await fetch(`${TCG_API}/cards?q=name:"${encodeURIComponent(q)}"&pageSize=6`);
+    const d=await r.json();
+    if(!d.data||!d.data.length){box.innerHTML='<div class="loading-line">Aucune carte trouvée — remplis manuellement</div>';return;}
+    box.innerHTML=d.data.map(c=>{
+      const p=c.tcgplayer?.prices?.holofoil?.market||c.tcgplayer?.prices?.normal?.market||null;
+      const ps=p?(p*0.92).toFixed(2)+' €':'—';
+      const obj=JSON.stringify({name:c.name,set:c.set?.name||'',img:c.images?.small||'',price:p?parseFloat((p*0.92).toFixed(2)):null}).replace(/"/g,'&quot;');
+      return`<div class="sr-item" onclick="pickCard(${obj})">
+        <img class="sr-img" src="${c.images?.small}" alt="">
+        <div><div class="sr-name">${c.name}</div><div class="sr-set">${c.set?.name||''}</div></div>
+        <div class="sr-price">${ps}</div>
+      </div>`;
+    }).join('');
+  }catch(e){box.innerHTML='<div class="loading-line">Erreur réseau</div>';}
+}
+
+function pickCard(c){
+  document.getElementById('m-name').value=c.name;
+  document.getElementById('m-serie').value=c.set;
+  document.getElementById('m-img').value=c.img;
+  document.getElementById('m-type').value='Carte single';
+  if(c.price)document.getElementById('m-achat').value=c.price;
+  document.getElementById('sr-box').style.display='none';
+  document.getElementById('m-search').value=c.name;
+}
+
+function submitItem(){
+  const name=document.getElementById('m-name').value.trim();
+  const type=document.getElementById('m-type').value;
+  const serie=document.getElementById('m-serie').value.trim();
+  const achat=parseFloat(document.getElementById('m-achat').value);
+  const qty=parseInt(document.getElementById('m-qty').value)||1;
+  const marche=parseFloat(document.getElementById('m-marche').value)||null;
+  const img=document.getElementById('m-img').value.trim()||null;
+  const watch=modalMode==='watchlist'||document.getElementById('m-watch').value==='1';
+  if(!name)return toast('Entre un nom','e');
+  if(!achat||achat<=0)return toast('Entre un prix d\'achat valide','e');
+  const item={id:nid++,name,type,serie,achat,qty,marche,img,watched:watch,log:marche?[{t:new Date().toISOString(),p:marche}]:[],alerts:{seuil:5,target:null,on:false}};
+  items.push(item);
+  save();closeModal();
+  renderPort();updateKPIs();updateSidebar();updateBadges();
+  toast('✅ '+name.substring(0,24)+'… ajouté !','s');
+  if(watch&&document.getElementById('page-watchlist').classList.contains('on'))renderWatch();
+}
+
+function deleteItem(id){
+  if(!confirm('Supprimer cet item ? (item ouvert, vendu, ou échangé)'))return;
+  items=items.filter(i=>i.id!==id);
+  save();renderPort();updateKPIs();updateSidebar();updateBadges();
+  toast('Item supprimé','');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════
+function toast(msg,type=''){
+  const stack=document.getElementById('toasts');
+  const t=document.createElement('div');
+  t.className=`toast ${type}`;
+  const ico={s:'✅',e:'❌',w:'⚠️',''  :'ℹ️'};
+  t.innerHTML=`<span style="font-size:15px">${ico[type]||'ℹ️'}</span>${msg}`;
+  stack.appendChild(t);
+  requestAnimationFrame(()=>t.classList.add('show'));
+  setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),400);},3200);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+renderPort();updateKPIs();updateSidebar();updateBadges();
+</script>
+</body>
+</html>
